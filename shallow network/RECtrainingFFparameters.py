@@ -50,7 +50,7 @@ for iterationIndex in range(0, iterationNumber):
     criterion = nn.CrossEntropyLoss()
     optimizerPCnet = optim.SGD(pcNet.parameters(), lr=0.01, momentum=0.9)
 
-    for epoch in range(0, numberEpochs):  # loop over the data set twice
+    for epoch in range(0, numberEpochs):  
         print(iterationIndex)
         print(epoch)
 
@@ -60,25 +60,22 @@ for iterationIndex in range(0, iterationNumber):
             c = torch.randn(batchSize, featuresC, 16, 16).cuda()
             d = torch.randn(batchSize, featuresD, 8, 8).cuda()
 
-            # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.cuda()
             labels = labels.cuda()
 
-            # zero the parameter gradients
             optimizerPCnet.zero_grad()
             finalLoss = 0
 
             outputs, a, b, c, d, errorB, errorC, errorD = pcNet(inputs, b, c, d, 'forward')
             finalLoss = criterion(outputs, labels)
 
-            finalLoss.backward(retain_graph=True)  # makes sense? do we need the intermedary results?
+            finalLoss.backward(retain_graph=True)  
             optimizerPCnet.step()
 
-        path = f"/home/andrea/PycharmProjects/PredictiveCoding/models/pcNetREC_FF_E{epoch}_I{iterationIndex}.pth"
+        path = f"/models/pcNetREC_FF_E{epoch}_I{iterationIndex}.pth"
         torch.save({"module": pcNet.state_dict(), "epoch": epoch}, path)
 
-# computing performance of FF
         correct = 0
         total = 0
 
@@ -88,7 +85,6 @@ for iterationIndex in range(0, iterationNumber):
             c = torch.randn(batchSize, featuresC, 16, 16).cuda()
             d = torch.randn(batchSize, featuresD, 8, 8).cuda()
 
-            # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.cuda()
             labels = labels.cuda()
@@ -100,9 +96,8 @@ for iterationIndex in range(0, iterationNumber):
 
             total += labels.size(0)
 
-        # print((100 * correct / total))
         resFFall[epoch, iterationIndex] = (100 * correct / total)
 
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/accTrainingRECff.npy", resFFall)
+np.save(f"/accuracies/accTrainingRECff.npy", resFFall)
 
 

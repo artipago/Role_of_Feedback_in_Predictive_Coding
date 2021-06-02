@@ -37,7 +37,6 @@ alphaRec = 0.01
 betaFB = 0.33
 
 
-#first FF pass
 iterationNumber = 10
 numberEpochs = 20
 
@@ -51,7 +50,7 @@ for iterationIndex in range(0, iterationNumber):
     pcNet = predCodNet(featuresB, featuresC, featuresD, gammaMem, alphaRec, betaFB)
     pcNet = pcNet.cuda()
 
-    checkpointPhase = torch.load(f"/home/andrea/PycharmProjects/PredictiveCoding/models/pcNetREC_FF_E24_I{iterationIndex}.pth")
+    checkpointPhase = torch.load(f"/models/pcNetREC_FF_E24_I{iterationIndex}.pth")
     pcNet.load_state_dict(checkpointPhase["module"])
 
     for name, p in pcNet.named_parameters():
@@ -61,23 +60,18 @@ for iterationIndex in range(0, iterationNumber):
     criterionMSE = nn.functional.mse_loss
     optimizerPCnet = optim.SGD(pcNet.parameters(), lr=0.01, momentum=0.9)
 
-    for epoch in range(0, numberEpochs):  # loop over the data set twice
-
-        print(epoch)
+    for epoch in range(0, numberEpochs):  
 
         for i, data in enumerate(trainloader, 0):
-            # print(i)
 
             b = torch.randn(batchSize, featuresB, width, height).cuda()
             c = torch.randn(batchSize, featuresC, 16, 16).cuda()
             d = torch.randn(batchSize, featuresD, 8, 8).cuda()
 
-            # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.cuda()
             labels = labels.cuda()
 
-            # zero the parameter gradients
             optimizerPCnet.zero_grad()
             lossA = 0
             lossB = 0
@@ -92,10 +86,10 @@ for iterationIndex in range(0, iterationNumber):
 
             finalLoss = lossA + lossB + lossC
 
-            finalLoss.backward(retain_graph=True)  # makes sense? do we need the intermedary results?
+            finalLoss.backward(retain_graph=True) 
             optimizerPCnet.step()
 
-        path = f"/home/andrea/PycharmProjects/PredictiveCoding/models/pcNetREC_FF_Rec_E{epoch}_I{iterationIndex}.pth"
+        path = f"/models/pcNetREC_FF_Rec_E{epoch}_I{iterationIndex}.pth"
         torch.save({"module": pcNet.state_dict(), "epoch": epoch}, path)
 
         finalLossA = 0
@@ -106,13 +100,11 @@ for iterationIndex in range(0, iterationNumber):
         total = 0
 
         for i, data in enumerate(testloader, 0):
-            # print(i)
 
             b = torch.randn(batchSize, featuresB, width, height).cuda()
             c = torch.randn(batchSize, featuresC, 16, 16).cuda()
             d = torch.randn(batchSize, featuresD, 8, 8).cuda()
 
-            # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.cuda()
             labels = labels.cuda()
@@ -141,7 +133,7 @@ for iterationIndex in range(0, iterationNumber):
         print(finalLossC / total)
 
 print('Finished Training')
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/recLossTrainingRECff_rec.npy", resRecLossAll)
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/accTrainingRECff_rec.npy", resRecAll)
+np.save(f"/accuracies/recLossTrainingRECff_rec.npy", resRecLossAll)
+np.save(f"/accuracies/accTrainingRECff_rec.npy", resRecAll)
 
 

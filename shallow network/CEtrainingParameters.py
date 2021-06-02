@@ -51,7 +51,7 @@ for iterationIndex in range(0, iterationNumber):
     criterion = nn.CrossEntropyLoss()
     optimizerPCnet = optim.SGD(pcNet.parameters(), lr=0.005, momentum=0.9)
 
-    for epoch in range(0, numberEpochs):  # loop over the data set twice
+    for epoch in range(0, numberEpochs):  
 
         print(iterationIndex)
         print(epoch)
@@ -63,12 +63,10 @@ for iterationIndex in range(0, iterationNumber):
             cTemp = torch.zeros(batchSize, featuresC, 16, 16).cuda()
             dTemp = torch.zeros(batchSize, featuresD, 8, 8).cuda()
 
-            # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
             inputs = inputs.cuda()
             labels = labels.cuda()
 
-            # zero the parameter gradients
             optimizerPCnet.zero_grad()
             finalLoss = 0
 
@@ -79,15 +77,14 @@ for iterationIndex in range(0, iterationNumber):
             outputs, aTemp, bTemp, cTemp, dTemp, errorB, errorC, errorD = pcNet(inputs, bTemp, cTemp, dTemp, 'forward')
 
             for tt in range(timeSteps):
-                # print(tt)
                 outputs, aTemp, bTemp, cTemp, dTemp, errorB, errorC, errorD = pcNet(inputs, bTemp, cTemp, dTemp, 'full')
                 loss = criterion(outputs, labels)
                 finalLoss += loss
 
-            finalLoss.backward(retain_graph=True)  # makes sense? do we need the intermedary results?
+            finalLoss.backward(retain_graph=True)  
             optimizerPCnet.step()
 
-        path = f"/home/andrea/PycharmProjects/PredictiveCoding/models/pcNetCEnewFW2_E{epoch}_I{iterationIndex}.pth"
+        path = f"/models/pcNetCE_E{epoch}_I{iterationIndex}.pth"
         torch.save({"module": pcNet.state_dict(), "epoch": epoch}, path)
 
         #compute test accuracy
@@ -121,7 +118,7 @@ for iterationIndex in range(0, iterationNumber):
 
         resCEall[:, epoch, iterationIndex] = (100 * correct / total)
 
-        np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/accTrainingCEnewFW2.npy", resCEall)
+        np.save(f"/accuracies/accTrainingCE.npy", resCEall)
         print('Finished Training')
 
 

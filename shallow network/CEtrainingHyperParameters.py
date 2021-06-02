@@ -68,12 +68,6 @@ alphaRec = torch.rand(iterationNumber)
 betaFB = torch.rand(iterationNumber)
 memory = torch.rand(iterationNumber)
 
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEFWstartingPointGamma2",gammaFw)
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEFWstartingPointAlpha2",alphaRec)
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEFWstartingPointBeta2",betaFB)
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEFWstartingPointMemory2",memory)
-
-
 noiseLevelSP = [0, .02, .04, .06]
 noiseLevelG = [0, .2, .4, .8]
 
@@ -97,7 +91,7 @@ for iterationIndex in range(0, iterationNumber):
         pcNetSnP = predCodNet(featuresB, featuresC, featuresD, gammaFw[iterationIndex], alphaRec[iterationIndex], betaFB[iterationIndex], memory[iterationIndex])
         pcNetSnP = pcNetSnP.cuda()
 
-        checkpointPhase = torch.load(f"/home/andrea/PycharmProjects/PredictiveCoding/models/pcNetCEnewFW2_E24_I{iterationIndex}.pth")
+        checkpointPhase = torch.load(f"/models/pcNetCE_E24_I{iterationIndex}.pth") #here we load the parameters previously trained 
         pcNetG.load_state_dict(checkpointPhase["module"])
         pcNetSnP.load_state_dict(checkpointPhase["module"])
 
@@ -113,21 +107,14 @@ for iterationIndex in range(0, iterationNumber):
         pcNetG.memory.requires_grad = True
         optimizerPCnetG = optim.Adam([pcNetG.gammaFw, pcNetG.alphaRec, pcNetG.betaFB, pcNetG.memory], lr=0.001, weight_decay=0.00001)
 
-        # optimizerPCnetG = optim.Adam([{'params':[pcNetG.gammaFw, pcNetG.betaFB, pcNetG.memory], 'lr':0.01}, {'params':[pcNetG.alphaRec], 'lr':0.001}], weight_decay=0.00001)
-
         pcNetSnP.gammaFw.requires_grad = True
         pcNetSnP.alphaRec.requires_grad = True
         pcNetSnP.betaFB.requires_grad = True
         pcNetSnP.memory.requires_grad = True
         optimizerPCnetSnP = optim.Adam([pcNetSnP.gammaFw, pcNetSnP.alphaRec, pcNetSnP.betaFB, pcNetSnP.memory], lr=0.001, weight_decay=0.00001)
 
-        # optimizerPCnetSnP = optim.Adam([{'params':[pcNetSnP.gammaFw, pcNetSnP.betaFB, pcNetSnP.memory], 'lr':0.01}, {'params':[pcNetSnP.alphaRec], 'lr':0.001}], weight_decay=0.00001)
-
         for addEpoch in range(additionalEpochs):
-            print(iterationIndex)
-            print(addEpoch)
             for i, data in enumerate(trainloader, 0):
-
 
                 bTempG = torch.zeros(batchSize, featuresB, width, height).cuda()
                 cTempG = torch.zeros(batchSize, featuresC, 16, 16).cuda()
@@ -163,7 +150,6 @@ for iterationIndex in range(0, iterationNumber):
                 cTempSnP.requires_grad = True
                 dTempSnP.requires_grad = True
                 for tt in range(timeSteps):
-                    # print(tt)
                     outputsG, aTempG, bTempG, cTempG, dTempG, errorBG, errorCG, errorDG = pcNetG(imageGauss, bTempG, cTempG, dTempG, 'full')
                     outputsSnP, aTempSnP, bTempSnP, cTempSnP, dTempSnP, errorBSnP, errorCSnP, errorDSnP  = pcNetSnP(imagesnp, bTempSnP, cTempSnP, dTempSnP, 'full')
                     lossG = criterion(outputsG, labels)
@@ -171,8 +157,8 @@ for iterationIndex in range(0, iterationNumber):
                     finalLossG += lossG
                     finalLossSnP += lossSnP
 
-                finalLossG.backward(retain_graph=True)  # makes sense? do we need the intermedary results?
-                finalLossSnP.backward(retain_graph=True)  # makes sense? do we need the intermedary results?
+                finalLossG.backward(retain_graph=True)  
+                finalLossSnP.backward(retain_graph=True)  
 
                 optimizerPCnetG.step()
                 optimizerPCnetSnP.step()
@@ -180,23 +166,13 @@ for iterationIndex in range(0, iterationNumber):
             paramG = [pcNetG.gammaFw, pcNetG.alphaRec, pcNetG.betaFB, pcNetG.memory]
             paramSnP = [pcNetSnP.gammaFw, pcNetSnP.alphaRec, pcNetSnP.betaFB, pcNetSnP.memory]
 
-            np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEgaussNewFW2norm2_N{ii}_E{addEpoch}_I{iterationIndex}", paramG)
-            np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/parameters/paramCEsnpNewFW2norm2_N{ii}_E{addEpoch}_I{iterationIndex}", paramSnP)
+            np.save(f"/parameters/paramCEgauss_N{ii}_E{addEpoch}_I{iterationIndex}", paramG) #saving the hyperParams
+            np.save(f"/parameters/paramCEsnp_N{ii}_E{addEpoch}_I{iterationIndex}", paramSnP) #saving the hyperParams
 
             if addEpoch == (additionalEpochs-1) :
                 #compute test accuracy
                 correctG = np.zeros(timeSteps+1)
                 correctSNP = np.zeros(timeSteps+1)
-
-                confidenceG = np.zeros(timeSteps)
-                confidenceSNP = np.zeros(timeSteps)
-
-                recErrorGb = np.zeros(timeSteps)
-                recErrorGc = np.zeros(timeSteps)
-                recErrorGd = np.zeros(timeSteps)
-                recErrorSNPb = np.zeros(timeSteps)
-                recErrorSNPc = np.zeros(timeSteps)
-                recErrorSNPd = np.zeros(timeSteps)
 
                 total = 0
                 for i, data in enumerate(testloader, 0):
@@ -244,49 +220,14 @@ for iterationIndex in range(0, iterationNumber):
                         correctG[tt+1] = correctG[tt+1] + (predictedG == labels).sum().item()
                         correctSNP[tt+1] = correctSNP[tt+1] + (predictedSNP == labels).sum().item()
 
-                        # softMaxOutG = softMaxFunk(outputsG)
-                        # softMaxOutG = softMaxOutG.gather(1, predictedG.unsqueeze(1))
-                        #
-                        # softMaxOutSNP = softMaxFunk(outputsSnP)
-                        # softMaxOutSNP = softMaxOutSNP.gather(1, predictedSNP.unsqueeze(1))
-                        #
-                        # softMaxOutG = torch.mean(softMaxOutG)
-                        # softMaxOutSNP = torch.mean(softMaxOutSNP)
-
-                        # confidenceG [tt] = confidenceG [tt] + softMaxOutG.cpu().detach().numpy()
-                        # confidenceSNP [tt] = confidenceSNP [tt] + softMaxOutSNP.cpu().detach().numpy()
-                        #
-                        # recErrorGb[tt] = recErrorGb[tt] + errorBG.cpu().detach().numpy()
-                        # recErrorGc[tt] = recErrorGc[tt] + errorCG.cpu().detach().numpy()
-                        # recErrorGd[tt] = recErrorGd[tt] + errorDG.cpu().detach().numpy()
-                        # recErrorSNPb[tt] = recErrorSNPb[tt] + errorBSnP.cpu().detach().numpy()
-                        # recErrorSNPc[tt] = recErrorSNPc[tt] + errorCSnP.cpu().detach().numpy()
-                        # recErrorSNPd[tt] = recErrorSNPd[tt] + errorDSnP.cpu().detach().numpy()
-
                     total += labels.size(0)
 
                 resRECgauss[:, ii, iterationIndex] = (100 * correctG / total)
                 resRECsnp[:, ii, iterationIndex] = (100 * correctSNP / total)
 
-                # confRECgauss[:, ii, iterationIndex] = (100 * confidenceG / total)
-                # confRECsnp[:, ii, iterationIndex] = (100 * confidenceSNP / total)
-                #
-                # recErrRECgauss[0, :, ii, iterationIndex] = (recErrorGb / total)
-                # recErrRECgauss[1, :, ii, iterationIndex] = (recErrorGc / total)
-                # recErrRECgauss[2, :, ii, iterationIndex] = (recErrorGd / total)
-                # recErrRECsnp[0, :, ii, iterationIndex] = (recErrorSNPb / total)
-                # recErrRECsnp[1, :, ii, iterationIndex] = (recErrorSNPc / total)
-                # recErrRECsnp[2, :, ii, iterationIndex] = (recErrorSNPd / total)
 
-
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/accCEgaussNewFW2norm2.npy", resRECgauss)
-np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/accCEsnpNewFW2norm2.npy", resRECsnp)
-
-
-# np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/confCEgaussNewFW2norm.npy", confRECgauss)
-# np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/confCEsnpNewFW2norm.npy", confRECsnp)
-# np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/recErrCEgaussNewFW2norm.npy", recErrRECgauss)
-# np.save(f"/home/andrea/PycharmProjects/PredictiveCoding/accuracies/recErrCEsnpNewFW2norm.npy", recErrRECsnp)
+np.save(f"/accuracies/accCEgauss.npy", resRECgauss) #saving the accuracies
+np.save(f"/accuracies/accCEsnp.npy", resRECsnp) #saving the accuracies
 
 
 print('Finished Training')
