@@ -244,28 +244,28 @@ for ind,data in enumerate(correct_x_test):
     for j in range(len(fmodels)):
 
         if TARGETED:
-              criterion = foolbox.criteria.TargetClass(target_class)
-              attack = foolbox.attacks.RandomProjectedGradientDescent(fmodels[j],criterion=criterion)
-          else:
-              print ('This attacks are not supported!')
-              raise ValueError
+            criterion = foolbox.criteria.TargetClass(target_class)
+            attack = foolbox.attacks.RandomProjectedGradientDescent(fmodels[j],criterion=criterion)
+        else:
+            print ('This attacks are not supported!')
+            raise ValueError
           #foolbox2.3
-          numpy_target_image = target_image.squeeze_(0).cpu().numpy()
-          numpy_image = image.cpu().numpy()
+        numpy_target_image = target_image.squeeze_(0).cpu().numpy()
+        numpy_image = image.cpu().numpy()
 
 
-          tstart = datetime.now()
-          print ('starting attack...')
-          adv_image = attack(inputs=numpy_image,labels=label.numpy(),
-                             unpack=False)
+        tstart = datetime.now()
+        print ('starting attack...')
+        adv_image = attack(inputs=numpy_image,labels=label.numpy(),
+                           unpack=False)
 
 
-          print ("Time taken:",datetime.now() - tstart)
-          print (f"---Model{j}:{adv_image[0].distance.value}")
+        print ("Time taken:",datetime.now() - tstart)
+        print (f"---Model{j}:{adv_image[0].distance.value}")
 
-          targeted_attacks_list[index].append((j,picklable_adv(adv_image[0])))
+        targeted_attacks_list[index].append((j,picklable_adv(adv_image[0])))
 
-      index = index + 1
+    index = index + 1
 
 ########################################################################################
 ##                             Analyse
