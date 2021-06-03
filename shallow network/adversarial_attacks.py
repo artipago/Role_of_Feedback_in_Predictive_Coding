@@ -85,7 +85,7 @@ class picklable_adv():
 class deeper_model(torch.nn.Module):
 
     def __init__(self,t,predCodNet,batchsize):
-        super(deeper_andrea,self).__init__()
+        super(deeper_model,self).__init__()
         self.predCodNet = predCodNet.to(device)
         self.t = t
         self.batchSize = batchsize
