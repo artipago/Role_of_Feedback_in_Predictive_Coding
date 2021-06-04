@@ -15,9 +15,9 @@ root
 │   └── RECtrainingReconstructionParamters.py
 |   |   train the backward parameters for the unsupervised network.
 │   └── CEtrainingHyperParameters.py
-|   |   optimize the hyper-parameters of supervised networks for different levels of Gaussian and SaltNpepper noise. All scripts run 10 different initilizations, using CIFAR10.
+|   |   optimize the hyper-parameters of supervised networks for different levels of Gaussian and SaltNpepper noise.
 |   └── RECtrainingHyperParameters.py
-|   |   optimize the hyper-parameters of unsupervised networks for different levels of Gaussian and SaltNpepper noise. All scripts run 10 different initilizations, using CIFAR10.
+|   |   optimize the hyper-parameters of unsupervised networks for different levels of Gaussian and SaltNpepper noise.
 │   └── adversarial_attack.py
 |   |   test the network on adversarial attacks.
 │   └── predCodNet.py
